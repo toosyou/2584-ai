@@ -2,20 +2,24 @@
 
 const int state_game::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
 const int move_table::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
+const move_table state_game::table;
+
 
 state_game::state_game(){
     this->depth = 0;
-    this->point = 0;
+    this->score = 0;
     this->valid = true;
     this->won = false;
+
     for(int i=0;i<4;++i)
-        for(int j=0;j<4;++j)
-            this->value_cells[i][j] = 0;
+        this->bitboard[i] = 0;
+
+    srand(time(NULL));
 }
 
-state_game::state_game(int board[4][4], int point_board){
+state_game::state_game(int board[4][4], int score_board){
     this->valid = true;
-    this->point = point_board;
+    this->score = score_board;
     this->depth = 0;
 
     map<int, int> index_tile;
@@ -23,35 +27,40 @@ state_game::state_game(int board[4][4], int point_board){
         index_tile[mapping_2584[i]] = i;
     }
     for(int i=0;i<4;++i){
+        int tmp_board[4];
         for(int j=0;j<4;++j){
-            this->value_cells[i][j] = index_tile[ board[i][j] ];
-            if(this->value_cells[i][j] >= 17)
+            tmp_board[j] = index_tile[ board[i][j] ];
+            if(tmp_board[j] >= 17)
                 this->won = true;
         }
+        this->bitboard[i] = move_table::hash(tmp_board);
     }
 
 }
 
 state_game::state_game(const state_game& s){
-    this->point = s.point;
+    this->score = s.score;
     this->valid = s.valid;
     this->won = s.won;
     this->depth = s.depth;
     for(int i=0;i<4;++i)
-        for(int j=0;j<4;++j)
-            this->value_cells[i][j] = s.value_cells[i][j];
-    const int mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
+        this->bitboard[i] = s.bitboard[i];
 }
 
 vector<state_game> state_game::appear(){
     vector<state_game> states_return;
+    int this_board[4][4];
+    for(int i=0;i<4;++i){
+        move_table::unhash(this->bitboard[i], this_board[i]);
+    }
+
     for(int i=0;i<4;++i)
         for(int j=0;j<4;++j)
-            if(this->value_cells[i][j] == 0){
+            if(this_board[i][j] == 0){
                 state_game tmp = *this;
-                tmp.value_cells[i][j] = 1;
+                tmp.bitboard[i] |= 1 << (5*(3-j));
                 states_return.push_back(tmp);
-                tmp.value_cells[i][j] = 3;
+                tmp.bitboard[i] |= 3 << (5*(3-j));
                 states_return.push_back(tmp);
             }
 
@@ -59,46 +68,31 @@ vector<state_game> state_game::appear(){
 }
 
 state_game state_game::appear_random(){
-    vector<state_game> all_appear = this->appear();
-    int random_index = rand() % all_appear.size();
-    return all_appear[random_index];
-}
-
-short* state_game::operator[](int index_i){
-    return this->value_cells[index_i];
-}
-
-state_game state_game::rotate_clockwise(){
-    state_game state_return = *this;
-
+    state_game rtn = *this;
+    vector<pair<int, int> > valid_coordinates;
+    int this_board[4][4];
+    int index_rand = 0;
+    int rand_tile = 0;
+    for(int i=0;i<4;++i){
+        move_table::unhash(this->bitboard[i], this_board[i]);
+    }
+    //find all valid points
     for(int i=0;i<4;++i){
         for(int j=0;j<4;++j){
-            state_return[i][j] = this->value_cells[3-j][i];
+            if(this_board[i][j] == 0){
+                valid_coordinates.push_back( pair<int,int>(i,j) );
+            }
         }
     }
-
-    return state_return;
+    //choose one randomly with random tile 1 or 3
+    index_rand = rand() % valid_coordinates.size();
+    rand_tile = (rand() % 8) < 6 ? 1 : 3 ;
+    rtn.bitboard[valid_coordinates[index_rand].first] |= rand_tile << (5*(3- valid_coordinates[index_rand].second ));
+    return rtn;
 }
 
-state_game state_game::rotate_counterclockwise(){
-    state_game state_return = *this;
-
-    for(int i=0;i<4;++i){
-        for(int j=0;j<4;++j){
-            state_return[i][j] = this->value_cells[j][3-i];
-        }
-    }
-
-    return state_return;
-}
-
-state_game state_game::rotate_clockwise(unsigned int times){
-    times %= 4;
-    state_game state_return = *this;
-    for(int i=0;i<times;++i){
-        state_return = state_return.rotate_clockwise();
-    }
-    return state_return;
+int state_game::operator[](int index_i){
+    return this->bitboard[index_i];
 }
 
 state_game state_game::move(int urdl){
@@ -124,72 +118,93 @@ state_game state_game::move(int urdl){
 
 state_game state_game::up(){
     bool moved = false;
-    state_game state_return = *this;
-
-    //converge all
-    for(int i=0;i<3;++i){
-        for(int j=0;j<4;++j){
-            if(state_return[i][j] == 0)
-                continue;
-            //find below
-            for(int k=i+1;k<4;++k){
-                if(state_return[k][j] == 0)
-                    continue;
-                if( (state_return[i][j] == 1 && state_return[k][j] == 1) ||
-                    abs(state_return[i][j] - state_return[k][j]) == 1 ){ //converge
-                    state_return[i][j] = max(state_return[i][j], state_return[k][j]) + 1;
-                    state_return[k][j] = 0;
-                    moved = true;
-                    if(state_return[i][j] == 17)
-                        state_return.won = true;
-                    this->point += mapping_2584[state_return[i][j]];
-                }
-                break;
-            }
-        }
-    }
-
-    //move all cells up
-    for(int j=0;j<4;++j){
-        int k = 0;
-        for(int i=0;i<4;++i){
-            if(state_return[i][j] != 0){
-                state_return[k][j] = state_return[i][j];
-                //check if it's moved
-                if(k != i)
-                    moved = true;
-                k += 1;
-            }
-        }
-        for(;k<4;++k){
-            state_return[k][j] = 0;
-        }
-    }
-
-    if(moved == false)
-        state_return.valid = false;
-    else
-        state_return.depth += 1;
-
+    state_game rtn = *this;
+    int tmp[4];
     for(int i=0;i<4;++i){
-        for(int j=0;j<4;++j){
-            if(this->value_cells[i][j] == 0)
-                this->point += 100;
-        }
+        int bitboard_column = column(i, this->bitboard);
+        tmp[i] = table.table[bitboard_column];
+        rtn.score += table.score[bitboard_column];
+
+        if(table.moved[bitboard_column] == true)
+            moved = true;
+        if(table.won[bitboard_column] == true)
+            rtn.won = true;
     }
-    return state_return;
+    for(int i=0;i<4;++i){
+        rtn.bitboard[i] = column(i, tmp);
+    }
+    if(moved == true)
+        rtn.depth += 1;
+    else
+        rtn.valid = false;
+
+    return rtn;
 }
 
 state_game state_game::down(){
-    return this->rotate_clockwise(2).up().rotate_clockwise(2);
+    bool moved = false;
+    state_game rtn = *this;
+    int tmp[4];
+    for(int i=0;i<4;++i){
+        int bitboard_column_reversed = reverse_bitboard(column(i, this->bitboard));
+        tmp[i] = reverse_bitboard(table.table[bitboard_column_reversed]);
+        rtn.score += table.score[bitboard_column_reversed];
+
+        if(table.moved[bitboard_column_reversed] == true)
+            moved = true;
+        if(table.won[bitboard_column_reversed] == true)
+            rtn.won = true;
+    }
+    for(int i=0;i<4;++i){
+        rtn.bitboard[i] = column(i, tmp);
+    }
+    if(moved == true)
+        rtn.depth += 1;
+    else
+        rtn.valid = false;
+
+    return rtn;
 }
 
 state_game state_game::left(){
-    return this->rotate_clockwise().up().rotate_counterclockwise();
+    bool moved = false;
+    state_game rtn = *this;
+    for(int i=0;i<4;++i){
+        rtn.bitboard[i] = table.table[this->bitboard[i]];
+        rtn.score += table.score[this->bitboard[i]];
+
+        if(table.moved[this->bitboard[i]] == true)
+            moved = true;
+        if(table.won[this->bitboard[i]] == true)
+            rtn.won = true;
+    }
+    if(moved == true)
+        rtn.depth += 1;
+    else
+        rtn.valid = false;
+
+    return rtn;
 }
 
 state_game state_game::right(){
-    return this->rotate_counterclockwise().up().rotate_clockwise();
+    bool moved = false;
+    state_game rtn = *this;
+    for(int i=0;i<4;++i){
+        int bitboard_reversed = reverse_bitboard(this->bitboard[i]);
+        rtn.bitboard[i] = reverse_bitboard(this->table.table[bitboard_reversed]);
+        rtn.score += this->table.score[bitboard_reversed];
+
+        if(this->table.moved[bitboard_reversed] == true)
+            moved = true;
+        if(this->table.won[bitboard_reversed] == true)
+            rtn.won = true;
+    }
+    if(moved == true)
+        rtn.depth += 1;
+    else
+        rtn.valid = false;
+
+    return rtn;
 }
 
 vector<state_game> state_game::move_set(){
@@ -216,24 +231,10 @@ vector<state_game> state_game::move_set(){
     return states_return;
 }
 
-bool state_game::operator<(const state_game &s)const{
-    for(int i=0;i<4;++i){
-        for(int j=0;j<4;++j){
-            if(this->value_cells[i][j] > s.value_cells[i][j])
-                return false;
-            else if(this->value_cells[i][j] < s.value_cells[i][j])
-                return true;
-        }
-    }
-    return false;
-}
-
 bool state_game::operator==(const state_game &s)const{
     for(int i=0;i<4;++i){
-        for(int j=0;j<4;++j){
-            if(this->value_cells[i][j] != s.value_cells[i][j])
-                return false;
-        }
+        if(this->bitboard[i] != s.bitboard[i])
+            return false;
     }
     return true;
 }
@@ -242,11 +243,31 @@ bool state_game::operator!=(const state_game &s)const{
     return !(*this == s);
 }
 
+int state_game::reverse_bitboard(int bits){
+    int rtn = 0;
+    for(int i=0;i<4;++i){
+        rtn <<= 5;
+        rtn |= (bits >> (5*i)) & 31;
+    }
+    return rtn;
+}
+
+int state_game::column(int index, int board[4]){
+    int rtn = 0;
+    for(int i=0;i<4;++i){
+        rtn <<= 5;
+        rtn |= (board[i] >> (5*(3-index)) ) & 31 ;
+    }
+    return rtn;
+}
+
 void state_game::print(){
     cout << "======================================" <<endl;
     for(int i=0;i<4;++i){
+        int tmp[4];
+        move_table::unhash(this->bitboard[i], tmp);
         for(int j=0;j<4;++j){
-            cout << mapping_2584[this->value_cells[i][j]] << "\t";
+            cout << mapping_2584[tmp[j] ] << "\t";
         }
         cout << endl;
     }
@@ -257,12 +278,27 @@ void state_game::print(){
 move_table::move_table(){
     this->table = new unsigned int[1<<20];
     this->score = new int[1<<20];
+    this->moved = new bool[1<<20];
+    this->won = new bool[1<<20];
     for(int i=0;i<(1<<20);++i){
         int board[4];
         unhash(i, board);
         this->score[i] = move_left(board);
         this->table[i] = hash(board);
+        this->moved[i] = (this->table[i] != i);
+        this->won[i] = false;
+        for(int j=0;j<4;++j){
+            if(board[j] >= 17)
+                this->won[i] = true;
+        }
     }
+}
+
+move_table::~move_table(){
+    delete [] table;
+    delete [] score;
+    delete [] moved;
+    delete [] won;
 }
 
 void move_table::unhash(int bit_board, int* unhahsed_table){

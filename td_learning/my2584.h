@@ -5,30 +5,37 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <utility>
+#include <time.h>
 
 using namespace std;
 
 struct move_table{
     unsigned int* table;
     int* score;
+    bool* moved;
+    bool* won;
     static const int mapping_2584[32];
 
     move_table();
     ~move_table();
 
-    void unhash(int bit_board, int* unhahsed_table);
-    unsigned int hash(int board[4]);
-    int move_left(int *board );
+    static void unhash(int bit_board, int* unhahsed_table);
+    static unsigned int hash(int board[4]);
+    static int move_left(int *board );
 
 };
 
 struct state_game{
     bool valid;
     bool won;
-    short value_cells[4][4];
-	static const int mapping_2584[32];
-	int point;
+    int score;
 	int depth;
+
+    //short value_cells[4][4];
+    int bitboard[4];
+
+	static const int mapping_2584[32];
     static const move_table table;
 
 	state_game();
@@ -36,19 +43,18 @@ struct state_game{
 	state_game(const state_game& s);
     vector<state_game> appear();
     state_game appear_random();
-    short* operator[](int index_i);
-    state_game rotate_clockwise();
-    state_game rotate_counterclockwise();
-    state_game rotate_clockwise(unsigned int times);
+    int operator[](int index_i);
 	state_game move(int urdl);
     state_game up();
     state_game down();
     state_game left();
     state_game right();
     vector<state_game> move_set();
-	bool operator<(const state_game &s)const;
 	bool operator==(const state_game &s)const;
 	bool operator!=(const state_game &s)const;
+
+    static int reverse_bitboard(int bits);
+    int column(int index, int board[4]);
 
     void print();
 };
