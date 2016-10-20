@@ -1,2 +1,2 @@
 all:
-	g++ -std=c++11 -O3 Fib2584/*.cpp *.cpp -o play_game
+	g++-6 -std=c++11 -fopenmp -O3 Fib2584/*.cpp *.cpp -o play_game
