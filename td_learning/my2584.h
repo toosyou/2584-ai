@@ -54,7 +54,7 @@ struct state_game{
 	bool operator!=(const state_game &s)const;
 
     static int reverse_bitboard(int bits);
-    int column(int index, int board[4]);
+    static int column(int index, int board[4]);
 
     void print();
 };

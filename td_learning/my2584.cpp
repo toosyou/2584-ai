@@ -1,7 +1,10 @@
 #include "my2584.h"
 
+#define WIN_INDEX 14
+
 const int state_game::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
 const int move_table::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
+//                                        0, 1, 2, 3, 4, 5,  6,  7,  8,  9, 10,  11,  12,  13,  14,  15,   16,   17
 const move_table state_game::table;
 
 
@@ -83,6 +86,10 @@ state_game state_game::appear_random(){
                 valid_coordinates.push_back( pair<int,int>(i,j) );
             }
         }
+    }
+    if(valid_coordinates.size() == 0){
+        rtn.valid = false;
+        return rtn;
     }
     //choose one randomly with random tile 1 or 3
     index_rand = rand() % valid_coordinates.size();
@@ -288,7 +295,7 @@ move_table::move_table(){
         this->moved[i] = (this->table[i] != i);
         this->won[i] = false;
         for(int j=0;j<4;++j){
-            if(board[j] >= 17)
+            if(board[j] >= WIN_INDEX)
                 this->won[i] = true;
         }
     }
@@ -352,5 +359,9 @@ int move_table::move_left(int *board){
         board[k] = 0;
     }
 
+    for(int i=0;i<4;++i){
+        if(board[i] == 0)
+            score += 100;
+    }
     return score;
 }
