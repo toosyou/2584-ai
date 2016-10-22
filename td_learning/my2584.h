@@ -7,8 +7,11 @@
 #include <map>
 #include <utility>
 #include <time.h>
+#include "value_table.h"
 
 using namespace std;
+
+struct value_table;
 
 struct move_table{
     unsigned int* table;
@@ -55,6 +58,8 @@ struct state_game{
 
     static int reverse_bitboard(int bits);
     static int column(int index, int board[4]);
+
+    int best_move(value_table &tb);
 
     void print();
 };

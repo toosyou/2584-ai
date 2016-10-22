@@ -22,7 +22,7 @@ value_table::~value_table(){
     }
 }
 
-long double value_table::value(state_game s){
+long double value_table::value(state_game &s){
     if(s.valid == false)
         return 0.0L;
 
@@ -53,6 +53,41 @@ void value_table::update(state_game &st, state_game &stn, long double learning_r
     }
 
     return;
+}
+
+void value_table::update(vector<state_game> &vs, long double learning_rate){
+    //update value table
+    vs.back().valid = false;
+    vector<state_game>::iterator it_game;
+    for(it_game = vs.end()-1; it_game != vs.begin(); --it_game){
+        this->update( *(it_game-1), *it_game, learning_rate );
+    }
+    return;
+}
+
+state_game value_table::train(long double learning_rate){
+    vector<state_game> game_played;
+    state_game game;
+    game = game.appear_random();
+    game_played.push_back(game);
+    while(1){
+        //make best move
+        int best_move = game.best_move(*this);
+        if(best_move == -1){//died
+            break;
+        }
+
+        //make next move
+        game = game.move(best_move);
+        game = game.appear_random();
+        game_played.push_back(game);
+    }
+
+    //update value table
+    this->update(game_played, learning_rate);
+
+    //return end game
+    return game;
 }
 
 void value_table::dump(const char* address){

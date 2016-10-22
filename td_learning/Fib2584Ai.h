@@ -5,9 +5,12 @@
 #include <ctime>
 #include "Fib2584/MoveDirection.h"
 #include "my2584.h"
+#include "value_table.h"
 
 class Fib2584Ai
 {
+	value_table tb;
+	
 public:
 	Fib2584Ai();
 	// initialize ai

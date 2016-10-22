@@ -33,7 +33,7 @@ state_game::state_game(int board[4][4], int score_board){
         int tmp_board[4];
         for(int j=0;j<4;++j){
             tmp_board[j] = index_tile[ board[i][j] ];
-            if(tmp_board[j] >= 17)
+            if(tmp_board[j] >= WIN_INDEX)
                 this->won = true;
         }
         this->bitboard[i] = move_table::hash(tmp_board);
@@ -212,6 +212,30 @@ state_game state_game::right(){
         rtn.valid = false;
 
     return rtn;
+}
+
+int state_game::best_move(value_table &tb){
+    //choose the max value move
+    long double max_value_game = -9999.99L;
+    bool died = true;
+    int next_move = 0;
+
+    for(int i=0;i<4;++i){
+        state_game next_game = this->move(i);
+        if(next_game.valid == true){
+            long double next_value = tb.value(next_game);
+            died = false;
+            if(max_value_game <= next_value){ //update
+                next_move = i;
+                max_value_game = next_value;
+            }
+        }
+    }
+
+    if(died == true)
+        return -1;
+
+    return next_move;
 }
 
 vector<state_game> state_game::move_set(){
