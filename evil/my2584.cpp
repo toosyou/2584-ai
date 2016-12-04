@@ -302,6 +302,7 @@ void state_game::print(){
         }
         cout << endl;
     }
+    cout << "Score:\t" << this->score <<endl ;
 
     return;
 }
@@ -316,7 +317,7 @@ move_table::move_table(){
         unhash(i, board);
         this->score[i] = move_left(board);
         this->table[i] = hash(board);
-        this->moved[i] = (this->table[i] != i);
+        this->moved[i] = (this->table[i] != (unsigned int)i);
         this->won[i] = false;
         for(int j=0;j<4;++j){
             if(board[j] >= WIN_INDEX)
