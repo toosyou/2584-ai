@@ -214,6 +214,16 @@ state_game state_game::right(){
     return rtn;
 }
 
+state_game state_game::rotate_clockwise(){
+    state_game rtn = *this;
+
+    for(int i=0;i<4;++i){
+        rtn.bitboard[i] = this->column(i);
+    }
+
+    return rtn;
+}
+
 int state_game::best_move(value_table &tb){
     //choose the max value move
     long double max_value_game = -9999.99L;
@@ -290,6 +300,10 @@ int state_game::column(int index, int board[4]){
         rtn |= (board[i] >> (5*(3-index)) ) & 31 ;
     }
     return rtn;
+}
+
+int state_game::column(int index){
+    return state_game::column(index, this->bitboard);
 }
 
 void state_game::print(){

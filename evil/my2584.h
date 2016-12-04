@@ -52,12 +52,14 @@ struct state_game{
     state_game down();
     state_game left();
     state_game right();
+    state_game rotate_clockwise();
     vector<state_game> move_set();
 	bool operator==(const state_game &s)const;
 	bool operator!=(const state_game &s)const;
 
     static int reverse_bitboard(int bits);
     static int column(int index, int board[4]);
+    int column(int index);
 
     int best_move(value_table &tb);
 

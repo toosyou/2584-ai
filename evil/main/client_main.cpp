@@ -1,4 +1,4 @@
-#include <sys/types.h>  
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 			break;
 		}
         cout << "Receive command: " << sInput << endl;
-        
+
         // handle all genmoves
         if(sInput.find("genmove") != string::npos)
         {
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
                 index++;
             }
             //assert(index == 16);
-            
+
             string sOutput;
 
             if(role == PLAYER)
@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
         }
         //statistic.increaseOneMove();
     }
-	
+
 
 	/* Close connection */
 	close(sockfd);

@@ -31,12 +31,12 @@ int main(void){
         }
         if(times % dump_size == 0){
             char address[200] = {0};
-            sprintf(address, "%d.vt", times/dump_size);
+            sprintf(address, "vts/%d.vt", times/dump_size);
             cout << times << " th dumping: " << address <<endl;
             vt.dump(address);
         }
-        if(times == 1000000){
-            learning_rate = 0.00025L;
+        if(times % 500000 == 0){
+            learning_rate /= 2.0L;
             cout << times << "th change-learning-rate: " << learning_rate <<endl;
         }
     }

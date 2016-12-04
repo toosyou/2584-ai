@@ -60,7 +60,13 @@ void value_table::update(vector<state_game> &vs, long double learning_rate){
     vs.back().valid = false;
     vector<state_game>::iterator it_game;
     for(it_game = vs.end()-1; it_game != vs.begin(); --it_game){
-        this->update( *(it_game-1), *it_game, learning_rate );
+        state_game now = *(it_game-1);
+        state_game next = *it_game;
+        for(int i=0;i<4;++i){
+            this->update( now, next, learning_rate );
+            now = now.rotate_clockwise();
+            next = next.rotate_clockwise();
+        }
     }
     return;
 }
@@ -68,6 +74,7 @@ void value_table::update(vector<state_game> &vs, long double learning_rate){
 state_game value_table::train(long double learning_rate){
     vector<state_game> game_played;
     state_game game;
+    game = game.appear_random();
     game = game.appear_random();
     game_played.push_back(game);
     while(1){
