@@ -1,8 +1,8 @@
 CXX = g++-6
 CXXFLAGS = -std=c++11 -O3
 
-client:
-	g++ *.cpp main/client_main.cpp Fib2584/*.cpp -o ai_client
+client: my2584.cpp my2584.h value_table.cpp value_table.h Fib2584Ai.cpp
+	$(CXX) my2584.cpp my2584.h value_table.cpp value_table.h Fib2584Ai.cpp main/client_main.cpp Fib2584/*.cpp -o ai_client
 
 stdio:
 	g++ *.cpp main/main.cpp Fib2584/*.cpp -o ai_stdio

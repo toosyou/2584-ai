@@ -98,6 +98,32 @@ state_game state_game::appear_random(){
     return rtn;
 }
 
+state_game state_game::appear_random(int tile){
+    state_game rtn = *this;
+    vector<pair<int, int> > valid_coordinates;
+    int this_board[4][4];
+    int index_rand = 0;
+    for(int i=0;i<4;++i){
+        move_table::unhash(this->bitboard[i], this_board[i]);
+    }
+    //find all valid points
+    for(int i=0;i<4;++i){
+        for(int j=0;j<4;++j){
+            if(this_board[i][j] == 0){
+                valid_coordinates.push_back( pair<int,int>(i,j) );
+            }
+        }
+    }
+    if(valid_coordinates.size() == 0){
+        rtn.valid = false;
+        return rtn;
+    }
+    //choose one randomly with random tile 1 or 3
+    index_rand = rand() % valid_coordinates.size();
+    rtn.bitboard[valid_coordinates[index_rand].first] |= tile << (5*(3- valid_coordinates[index_rand].second ));
+    return rtn;
+}
+
 int state_game::operator[](int index_i){
     return this->bitboard[index_i];
 }
@@ -235,7 +261,7 @@ int state_game::best_move(value_table &tb){
         if(next_game.valid == true){
             long double next_value = tb.value(next_game);
             died = false;
-            if(max_value_game <= next_value){ //update
+            if(max_value_game < next_value){ //update
                 next_move = i;
                 max_value_game = next_value;
             }

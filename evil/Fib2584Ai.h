@@ -4,9 +4,12 @@
 #include <cstdlib>
 #include <ctime>
 #include "Fib2584/Typedefs.h"
+#include "my2584.h"
 
 class Fib2584Ai
 {
+	int appear_sequence_;
+	value_table table_;
 public:
 	Fib2584Ai();
 	// initialize ai

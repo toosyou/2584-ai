@@ -46,6 +46,7 @@ struct state_game{
 	state_game(const state_game& s);
     vector<state_game> appear();
     state_game appear_random();
+    state_game appear_random(int tile);
     int operator[](int index_i);
 	state_game move(int urdl);
     state_game up();
