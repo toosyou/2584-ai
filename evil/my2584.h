@@ -63,6 +63,9 @@ struct state_game{
     int column(int index);
 
     int best_move(value_table &tb);
+    int best_evil(value_table &tb, int appear_sequence);
+    pair<long double, int> min_max_search(value_table &tb, bool is_evil=true, int appear_sequence=0,
+         int depth=0, long double alpha = -99999.99L, long double beta=99999.99L);
 
     void print();
 };

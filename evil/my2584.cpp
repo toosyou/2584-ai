@@ -1,6 +1,7 @@
 #include "my2584.h"
 
 #define WIN_INDEX 14
+#define MAX_SEARCH_DEPTH 4
 
 const int state_game::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
 const int move_table::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
@@ -274,6 +275,68 @@ int state_game::best_move(value_table &tb){
     return next_move;
 }
 
+int state_game::best_evil(value_table &tb, int appear_sequence){
+    return this->min_max_search(tb, true, appear_sequence, 0).second;
+}
+
+pair<long double, int> state_game::min_max_search(value_table &tb, bool is_evil, int appear_sequence,
+                        int depth, long double alpha, long double beta){
+    if(depth == MAX_SEARCH_DEPTH || this->valid == false)
+        return pair<long double, int>(tb.value(*this), -1);
+
+    if(is_evil){ // search for min value
+        int board[4][4]; // in 2584
+        for(int i=0;i<4;++i)
+            move_table::unhash(this->bitboard[i], board[i]);
+        for(int i=0;i<4;++i){
+            for(int j=0;j<4;++j){
+                board[i][j] = this->mapping_2584[board[i][j]];
+            }
+        }
+
+        int best_move = 0;
+        bool break_flag = false;
+        for(int i=0;i<4 && !break_flag;++i){
+            for(int j=0;j<4;++j){
+                if(board[i][j] == 0){
+                    if(appear_sequence == 2)
+                        board[i][j] = 3;
+                    else
+                        board[i][j] = 1;
+                    state_game next(board);
+                    pair<long double, int> this_score = next.min_max_search(tb, false, (appear_sequence+1)%3, depth+1, alpha, beta);
+                    if( beta > this_score.first ){
+                        beta = this_score.first;
+                        best_move = i*4+j;
+                    }
+                    if( beta <= alpha ){
+                        break_flag = true;
+                        break;
+                    }
+                    board[i][j] = 0;
+                }
+            }
+        }
+        return pair<long double, int>(beta, best_move);
+    }
+    else{ // player, search for max value
+        int best_move = 0;
+        for(int i=0;i<4;++i){
+            state_game next = this->move(i);
+            if(next.valid){
+                pair<long double, int> this_score = next.min_max_search(tb, true, appear_sequence, depth+1, alpha, beta);
+                if( alpha < this_score.first ){
+                    alpha = this_score.first;
+                    best_move = i;
+                }
+                if( beta <= alpha )
+                    break;
+            }
+        }
+        return pair<long double, int>(alpha, best_move);
+    }
+}
+
 vector<state_game> state_game::move_set(){
     vector<state_game> states_return;
     //if(this->won == true)
@@ -424,9 +487,9 @@ int move_table::move_left(int *board){
         board[k] = 0;
     }
 
-    for(int i=0;i<4;++i){
+    /*for(int i=0;i<4;++i){
         if(board[i] == 0)
             score += 100;
-    }
+    }*/
     return score;
 }
