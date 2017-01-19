@@ -1,7 +1,7 @@
 #include "my2584.h"
 
 #define WIN_INDEX 14
-#define MAX_SEARCH_DEPTH 4
+#define MAX_SEARCH_DEPTH 5
 
 const int state_game::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
 const int move_table::mapping_2584[32] = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269, 2178309};
@@ -251,32 +251,74 @@ state_game state_game::rotate_clockwise(){
     return rtn;
 }
 
-int state_game::best_move(value_table &tb){
+int state_game::best_move(value_table &tb, int appear_sequence, bool min_max){
+    if(min_max){
+        return this->min_max_search(tb, false, appear_sequence, 0).second;
+    }
     //choose the max value move
-    long double max_value_game = -9999.99L;
-    bool died = true;
-    int next_move = 0;
+    else{
+        long double max_value_game = -9999.99L;
+        bool died = true;
+        int next_move = 0;
 
-    for(int i=0;i<4;++i){
-        state_game next_game = this->move(i);
-        if(next_game.valid == true){
-            long double next_value = tb.value(next_game);
-            died = false;
-            if(max_value_game < next_value){ //update
-                next_move = i;
-                max_value_game = next_value;
+        for(int i=0;i<4;++i){
+            state_game next_game = this->move(i);
+            if(next_game.valid == true){
+                long double next_value = tb.value(next_game);
+                died = false;
+                if(max_value_game < next_value){ //update
+                    next_move = i;
+                    max_value_game = next_value;
+                }
             }
         }
+
+        if(died == true)
+            return -1;
+
+        return next_move;
     }
-
-    if(died == true)
-        return -1;
-
-    return next_move;
 }
 
-int state_game::best_evil(value_table &tb, int appear_sequence){
-    return this->min_max_search(tb, true, appear_sequence, 0).second;
+int state_game::best_evil(value_table &tb, int appear_sequence, bool min_max){
+    if(min_max)
+        return this->min_max_search(tb, true, appear_sequence, 0).second;
+    else{
+        int rtn_index = 0;
+        long double min_value = 9999.9;
+        int board[4][4]; // in 2584
+        for(int i=0;i<4;++i)
+            move_table::unhash(this->bitboard[i], board[i]);
+        for(int i=0;i<4;++i){
+            for(int j=0;j<4;++j){
+                board[i][j] = this->mapping_2584[board[i][j]];
+            }
+        }
+        for(int i=0;i<4;++i){
+            for(int j=0;j<4;++j){
+                if( board[i][j] == 0 ){
+                    board[i][j] = appear_sequence == 2 ? 3 : 1;
+                    state_game next(board);
+                    long double value = tb.value(next);
+                    if( value < min_value ){
+                        min_value = value;
+                        rtn_index = i * 4 + j;
+                    }
+                    board[i][j] = 0;
+                }
+            }
+        }
+        return rtn_index;
+    }
+}
+
+state_game state_game::move_evil(int index, int appear_sequence){
+    state_game rtn = *this;
+    int index_i = index / 4;
+    int index_j = index % 4;
+    int tile = appear_sequence == 2 ? 3 : 1;
+    rtn.bitboard[ index_i ] |= tile << (5*(3- index_j ));
+    return rtn;
 }
 
 pair<long double, int> state_game::min_max_search(value_table &tb, bool is_evil, int appear_sequence,
@@ -487,9 +529,5 @@ int move_table::move_left(int *board){
         board[k] = 0;
     }
 
-    /*for(int i=0;i<4;++i){
-        if(board[i] == 0)
-            score += 100;
-    }*/
     return score;
 }

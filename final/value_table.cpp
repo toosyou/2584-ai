@@ -71,7 +71,7 @@ void value_table::update(vector<state_game> &vs, long double learning_rate){
     return;
 }
 
-state_game value_table::train(long double learning_rate){
+state_game value_table::train(long double learning_rate, bool random_appear){
     vector<state_game> game_played;
     state_game game;
     int appear_sequence = 2;
@@ -87,7 +87,12 @@ state_game value_table::train(long double learning_rate){
 
         //make next move
         game = game.move(best_move);
-        game = game.appear_random( appear_sequence == 2 ? 3 : 1);
+        if(random_appear)
+            game = game.appear_random( appear_sequence == 2 ? 3 : 1);
+        else{
+            int best_evil = game.best_evil(*this, appear_sequence, false);
+            game = game.move_evil(best_evil, appear_sequence);
+        }
         appear_sequence = (appear_sequence+1) % 3;
         game_played.push_back(game);
     }

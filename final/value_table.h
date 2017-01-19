@@ -20,7 +20,7 @@ struct value_table{
     long double value(state_game &s);
     void update(state_game &st, state_game &stn, long double learning_rate);
     void update(vector<state_game> &vs, long double learning_rate);
-    state_game train(long double learning_rate);
+    state_game train(long double learning_rate, bool random_appear = true);
     void dump(const char* address);
     void load(const char* address);
 };
